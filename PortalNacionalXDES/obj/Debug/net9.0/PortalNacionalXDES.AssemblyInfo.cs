@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PortalNacionalXDES")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f69e86d5bf24c0445bec1f1f347aaeb72a141fde")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+46812905776d74b8305fa66cd52d9c117099ac6b")]
 [assembly: System.Reflection.AssemblyProductAttribute("PortalNacionalXDES")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PortalNacionalXDES")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

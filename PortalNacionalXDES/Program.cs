@@ -8,7 +8,7 @@ using System.Xml.Linq;
 
 class Program
 {
-    static string XML_FOLDER = @"C:\Users\secun\Downloads\Portal Nacional X DES\Portal-Nacional-X-DES\XMLs"; // Pasta onde estão os XMLs
+    static string XML_FOLDER = @"C:\XML"; // Pasta onde estão os XMLs
     static string imTomador = "";
     static void Main()
     {
@@ -17,8 +17,6 @@ class Program
 
     static void ProcessarPasta(string xmlFolder)
     {
-        Console.WriteLine("Insira a Inscrição Municial do tomador");
-        imTomador = Console.ReadLine();
         if (!Directory.Exists(xmlFolder))
         {
             Console.WriteLine($"Pasta '{xmlFolder}' não encontrada. Certifique-se de que ela existe.");
@@ -54,27 +52,52 @@ class Program
         string arquivoSaida = Path.Combine(xmlFolder, "registros_des.txt");
         File.WriteAllLines(arquivoSaida, registrosH.Values.Concat(registrosR));
 
-        Console.WriteLine($"✅ Processamento finalizado. Arquivo gerado em: {arquivoSaida}");
+        Console.WriteLine($"Processamento finalizado. Arquivo gerado em: {arquivoSaida}\n");
     }
 
     static (string registroH, string registroR, string cnpjTomador) GerarRegistros(string xmlPath)
     {
         try
         {
+
             XDocument doc = XDocument.Load(xmlPath);
             XNamespace nf = "http://www.sped.fazenda.gov.br/nfse";
 
             var toma = doc.Descendants(nf + "toma").FirstOrDefault();
             var emit = doc.Descendants(nf + "emit").FirstOrDefault();
             var prest = doc.Descendants(nf + "prest").FirstOrDefault();
-            string opcaoSimples = prest?.Descendants(nf + "opSimpNac").FirstOrDefault()?.Value;
+            string opcaoSimples = prest?.Descendants(nf + "opSimpNac").FirstOrDefault()?.Value ?? "";
             var infDPS = doc.Descendants(nf + "infDPS").FirstOrDefault();
             var valores = doc.Descendants(nf + "valores").FirstOrDefault();
             var valorServ = doc.Descendants(nf + "vServPrest").FirstOrDefault();
             var localIncid = doc.Descendants(nf + "cLocIncid").FirstOrDefault();
             var trib = doc.Descendants(nf + "tribMun").FirstOrDefault();
+            var serv = doc.Descendants(nf + "cServ").FirstOrDefault();
 
-            
+            //possibilidades
+            string[] sociedadeCGC = {
+                "19179789000118",
+                "65165649000108"
+            };
+            string[] construcao = {
+                "070201",
+                "070202",
+                "070203",
+                "070204",
+                "070205"
+            };
+            string[] propaganda = {
+                "170601",
+                "170602"
+            };
+
+            imTomador = toma?.Element(nf + "IM")?.Value ?? "";
+            if (imTomador == null)
+            {
+                Console.WriteLine("Insira a Inscrição Municial do tomador");
+                imTomador = Console.ReadLine() ?? "";
+            }
+
             string cnpjTomador = toma?.Element(nf + "CNPJ")?.Value ?? "";
             string xNomeTomador = toma?.Element(nf + "xNome")?.Value ?? "";
 
@@ -98,29 +121,47 @@ class Program
             var prestEnd = emit?.Descendants(nf + "enderNac").FirstOrDefault();
 
             bool isMei = (opcaoSimples == "2");
+            /*
+            DES - 
+            1 - Simples Nacional
+            2 - Não Optante
+            3 - MEI
+
+            Portal Nacional - 
+            1 - Não Optante
+            2 - MEI
+            3 - Simples Nacional
+            */
             string opcao = opcaoSimples switch
             {
                 "3" => "1",
                 "2" => "3",
-                "1" => "3",
+                "1" => "2",
                 _ => "2"
             };
             string modelo = isMei ? "28" : "5";
+
             string situacaoResponsabilidade = "1";
+            string codServ = serv?.Element(nf + "cTribNac")?.Value ?? "";
+            foreach (string servico in construcao)
+            {
+                situacaoResponsabilidade = (codServ == servico) ? "3" : "1";
+                break;
+            }
+            foreach (string servico in propaganda)
+            {
+                situacaoResponsabilidade = (codServ == servico) ? "5" : "1";
+                break;
+            }
+
 
             string ufEmitente = prestEnd?.Element(nf + "UF")?.Value ?? "";
             string codMunEmitente = prestEnd?.Element(nf + "cMun")?.Value ?? "";
-            string localIncidencia = localIncid?.Value;
+            string localIncidencia = localIncid?.Value ?? "";
 
             string aliquotaIss = trib?.Element(nf + "pAliq")?.Value ?? "0.00";
-            Console.WriteLine(aliquotaIss);
             bool isRetido = aliquotaIss != "0.00";
             string retencao = isRetido ? "1" : "2";
-
-            string[] sociedadeCGC = {
-                "19179789000118",
-                "65165649000108"
-            };
 
             string motivoNaoRetencao = "1";
             
